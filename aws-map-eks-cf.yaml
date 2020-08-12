@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS solution to deploy tag automatically EKS resources (EC2 Fanilly) with MAP2.0
+Resources:
+  SAMEKS4MAP:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: 'aws-eks-tagging::aws_eks_tagging.Bootstrap::ExecuteFunction'
+      Runtime: dotnetcore3.1
+      CodeUri: 's3://migrationbootcamp/MAP-EKS-TAG-LAMBDA-v1.zip'
+      Description: 'Automaticaly copy your MAP tags for EKS Resources'
+      MemorySize: 512
+      Timeout: 90
+      Policies:
+        - AWSLambdaExecute
+        - Statement:
+          - Sid: ASGPolicy
+            Effect: Allow
+            Action:
+            - autoscaling:CreateOrUpdateTags
+            - autoscaling:DescribeAutoScalingGroups
+            - autoscaling:DescribeAutoScalingInstances
+            - autoscaling:DescribeTags
+            - eks:Describe*
+            - eks:List*
+            - ec2:Describe*
+            - ec2:CreateTags
+            Resource: "*"
+  CWECatcher:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Description: "EKS AutoScaling creation catcher"
+      EventPattern:
+        source:
+          - "aws.autoscaling"
+        detail-type:
+          - "AWS API Call via CloudTrail"
+        detail:
+          eventSource:
+            - "autoscaling.amazonaws.com"
+          eventName:
+            - "CreateAutoScalingGroup"
+          userIdentity:
+            invokedBy:
+              - "eks-nodegroup.amazonaws.com"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn:
+            Fn::GetAtt:
+              - "SAMEKS4MAP"
+              - "Arn"
+          Id: "eks-map-tag-function"
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission 
+    Properties: 
+      FunctionName: 
+        Ref: "SAMEKS4MAP"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: 
+        Fn::GetAtt: 
+          - "CWECatcher"
+          - "Arn"
