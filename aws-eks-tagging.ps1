@@ -22,14 +22,10 @@ Write-Host "List of EBS Volumes linked to" $EBSIdList
 
 $EC2TagsObject = (Get-EC2Tag -Filter @{Name="resource-type";Values="instance"},@{Name="resource-id";Values=$ec2list.InstanceId} | Where-Object Key -eq "aws:migrationhub:source-id")
 
-
 foreach ($Targets in $EC2TagsObject){
-
    (Get-EC2Volume -Filter @{ Name="attachment.instance-id"; Values= $Targets.ResourceId })
-   Write-Host $Targets.Key "for" $Targets.ResourceId 
-   
-   $TagsToMigrate = 
+   Write-Host $Targets.Key "with value" $Targets.Value "for" $Targets.ResourceId 
+   New-EC2Tag -Resource $Targets.ResourceId -Tag @{Key=$Targets.Key;Value=$Targets.Value} -Verbose   
 }
 
-
-Get-EC2Tag -Filter @{Name="resource-type";Values="image"}
+#Tag name must be map-migrated cannot re-use the aws:migrationhub:source-id (Service usage limited)
