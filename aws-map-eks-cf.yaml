@@ -17,14 +17,9 @@ Resources:
           - Sid: ASGPolicy
             Effect: Allow
             Action:
-            - autoscaling:CreateOrUpdateTags
-            - autoscaling:DescribeAutoScalingGroups
-            - autoscaling:DescribeAutoScalingInstances
-            - autoscaling:DescribeTags
-            - eks:Describe*
-            - eks:List*
             - ec2:Describe*
             - ec2:CreateTags
+            - 
             Resource: "*"
   CWECatcher:
     Type: 'AWS::Events::Rule'
