@@ -18,14 +18,35 @@ Write-Host "List of EBS Volumes linked to" $EBSIdList
 
 
 
-# List EC2 from CE List (All EC2 Created by CE Migration)
 
-$EC2TagsObject = (Get-EC2Tag -Filter @{Name="resource-type";Values="instance"},@{Name="resource-id";Values=$ec2list.InstanceId} | Where-Object Key -eq "aws:migrationhub:source-id")
+
+# List EC2 from CE List (All EC2 Created by CE Migration)
+foreach ($ec2Looplist in $ec2list.InstanceId){
+   try {
+      $ErrorActionPreference = "Stop"
+      $EC2TagsObject = (Get-EC2Tag -Filter @{Name="resource-type";Values="instance"},@{Name="resource-id";Values=$ec2looplist} -Verbose | Where Key -in "aws:migrationhub:source-id","map-migrated" )
+      Write-Host $ec2looplist "is migrated with CE - looking for EBS"
+      $ec2VolumeList = (Get-EC2Volume -Filter @{ Name="attachment.instance-id"; Values= $ec2looplist}).VolumeId
+      foreach ($ebsLoop in $ec2VolumeList) {
+         Write-Host $ebsLoop "found for instance:" $ec2Looplist "applying tags" $EC2TagsObject.Value $EC2TagsObject.Key
+         New-EC2Tag -Resource $ebsLoop -Tag @{Key="map-migrated";Value=$EC2TagsObject.Value} -Verbose      
+         Write-Host "Any snapshot or AMI ? Keep lookin"
+         $ebsSnapList = (Get-EC2Snapshot -Filter @{Name="volume-id";Values=$ebsLoop})
+         Write-Host "Found" 
+      }
+   }
+   catch {
+      Write-Error $_.Exception.Message
+      Write-Host "No instance found with aws:migrationhub:source-id tag value"
+   }
+}
+
+
 
 foreach ($Targets in $EC2TagsObject){
    (Get-EC2Volume -Filter @{ Name="attachment.instance-id"; Values= $Targets.ResourceId })
-   Write-Host $Targets.Key "with value" $Targets.Value "for" $Targets.ResourceId 
-   New-EC2Tag -Resource $Targets.ResourceId -Tag @{Key=$Targets.Key;Value=$Targets.Value} -Verbose   
+   Write-Host "map-migrated with value" $Targets.Value "for" $Targets.ResourceId 
+   New-EC2Tag -Resource $Targets.ResourceId -Tag @{Key="map-migrated";Value=$Targets.Value} -Verbose   
 }
 
 #Tag name must be map-migrated cannot re-use the aws:migrationhub:source-id (Service usage limited)
