@@ -10,15 +10,8 @@ $CEServicesEBSList = (Get-EC2Volume -Filter @{ Name="attachment.instance-id"; Va
 
 #Check tags for each resource type
 # -Filter @{Name="resource-type";Values="volume"},@{Name="resource-id";Values=$ec2EBSList.VolumeId}
-
 # List EBS from CE List (All EBS Created by CE Migration)
-
-$EBSIdList = (Get-EC2Tag -Filter @{Name="resource-type";Values="volume"},@{Name="resource-id";Values=$ec2EBSList.VolumeId} | Get-Unique).ResourceId
-Write-Host "List of EBS Volumes linked to" $EBSIdList
-
-
-
-
+# This CmdLet is limited to tagged resource - if the resource has no tag ( at all ) its automatically filtered $EBSIdList = (Get-EC2Tag -Filter @{Name="resource-type";Values="volume"},@{Name="resource-id";Values=$ec2EBSList.VolumeId} | Get-Unique).ResourceId 
 
 # List EC2 from CE List (All EC2 Created by CE Migration)
 foreach ($ec2Looplist in $ec2list.InstanceId){
@@ -32,21 +25,14 @@ foreach ($ec2Looplist in $ec2list.InstanceId){
          New-EC2Tag -Resource $ebsLoop -Tag @{Key="map-migrated";Value=$EC2TagsObject.Value} -Verbose      
          Write-Host "Any snapshot or AMI ? Keep lookin"
          $ebsSnapList = (Get-EC2Snapshot -Filter @{Name="volume-id";Values=$ebsLoop})
-         Write-Host "Found" 
+         Write-Host "snapshots found for" $ebsLoop "-" $ebsSnapList.Count  "snapshots"
+         foreach ($snapshot in $ebsSnapList.SnapshotId) {
+            New-EC2Tag -Resource $snapshot -Tag @{Key="map-migrated";Value=$EC2TagsObject.Value} -Verbose      
+         }        
       }
    }
    catch {
       Write-Error $_.Exception.Message
-      Write-Host "No instance found with aws:migrationhub:source-id tag value"
+      Write-Error "No instance migrated with CloudEndure found (did you remoove the CloudEndure creation time log?"
    }
 }
-
-
-
-foreach ($Targets in $EC2TagsObject){
-   (Get-EC2Volume -Filter @{ Name="attachment.instance-id"; Values= $Targets.ResourceId })
-   Write-Host "map-migrated with value" $Targets.Value "for" $Targets.ResourceId 
-   New-EC2Tag -Resource $Targets.ResourceId -Tag @{Key="map-migrated";Value=$Targets.Value} -Verbose   
-}
-
-#Tag name must be map-migrated cannot re-use the aws:migrationhub:source-id (Service usage limited)
