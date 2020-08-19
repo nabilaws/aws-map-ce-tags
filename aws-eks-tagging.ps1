@@ -1,19 +1,7 @@
 #Requires -Modules @{ModuleName='AWS.Tools.Common';ModuleVersion='4.0.6.0'}
-#Requires -Module AWS.Tools.EC2, AWS.Tools.AutoScaling, AWS.Tools.EKS
+#Requires -Module AWS.Tools.EC2
 #1: Sync your CloudEndure Tagging and EC2/EBS 
 $ec2list = (Get-EC2Instance -Filter @{Name="tag-key";Values="CloudEndure creation time"}).Instances
-$CEServicesList =  (Get-EC2Instance -Filter @{Name="tag-key";Values="CloudEndure_Replication_Service"}).Instances
-
-#Retrieve linked EBS 
-$ec2EBSList = (Get-EC2Volume -Filter @{ Name="attachment.instance-id"; Values=$ec2list.InstanceId })
-$CEServicesEBSList = (Get-EC2Volume -Filter @{ Name="attachment.instance-id"; Values=$CEServicesList.InstanceId })
-
-#Check tags for each resource type
-# -Filter @{Name="resource-type";Values="volume"},@{Name="resource-id";Values=$ec2EBSList.VolumeId}
-# List EBS from CE List (All EBS Created by CE Migration)
-# This CmdLet is limited to tagged resource - if the resource has no tag ( at all ) its automatically filtered $EBSIdList = (Get-EC2Tag -Filter @{Name="resource-type";Values="volume"},@{Name="resource-id";Values=$ec2EBSList.VolumeId} | Get-Unique).ResourceId 
-
-# List EC2 from CE List (All EC2 Created by CE Migration)
 foreach ($ec2Looplist in $ec2list.InstanceId){
    try {
       $ErrorActionPreference = "Stop"
@@ -33,6 +21,6 @@ foreach ($ec2Looplist in $ec2list.InstanceId){
    }
    catch {
       Write-Error $_.Exception.Message
-      Write-Error "No instance migrated with CloudEndure found (did you remoove the CloudEndure creation time log?"
+      Write-Error "No instance migrated with CloudEndure found (did you remove the CloudEndure creation time log?)"
    }
 }
