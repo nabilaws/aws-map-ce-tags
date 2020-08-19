@@ -15,8 +15,11 @@ foreach ($ec2Looplist in $ec2list.InstanceId){
          $ebsSnapList = (Get-EC2Snapshot -Filter @{Name="volume-id";Values=$ebsLoop})
          Write-Host "snapshots found for" $ebsLoop "-" $ebsSnapList.Count  "snapshots"
          foreach ($snapshot in $ebsSnapList.SnapshotId) {
-            New-EC2Tag -Resource $snapshot -Tag @{Key="map-migrated";Value=$EC2TagsObject.Value} -Verbose      
+            New-EC2Tag -Resource $snapshot -Tag @{Key="map-migrated";Value=$EC2TagsObject.Value} -Verbose
+            Write-Host "AMI found for snapshot:" $snapshot
+            
          }        
+         
       }
    }
    catch {
