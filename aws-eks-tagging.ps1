@@ -1,6 +1,6 @@
 #Requires -Modules @{ModuleName='AWS.Tools.Common';ModuleVersion='4.0.6.0'}
 #Requires -Module AWS.Tools.EC2
-#1: Sync your CloudEndure Tagging and EC2/EBS 
+#1: Sync your CloudEndure Tagging and EC2/EBS/SNAPSHOTS/AMI
 $ec2list = (Get-EC2Instance -Filter @{Name="tag-key";Values="CloudEndure creation time"}).Instances
 foreach ($ec2Looplist in $ec2list.InstanceId){
    try {
@@ -17,7 +17,10 @@ foreach ($ec2Looplist in $ec2list.InstanceId){
          foreach ($snapshot in $ebsSnapList.SnapshotId) {
             New-EC2Tag -Resource $snapshot -Tag @{Key="map-migrated";Value=$EC2TagsObject.Value} -Verbose
             Write-Host "AMI found for snapshot:" $snapshot
-            
+            $amiId = (Get-EC2Image -Filter @{Name="block-device-mapping.snapshot-id";Values=$snapshot}).ImageId
+            foreach ($amis in $amiId) {
+               New-EC2Tag -Resource $amis -Tag @{Key="map-migrated";Value=$EC2TagsObject.Value} -Verbose               
+            }
          }        
          
       }
