@@ -1,7 +1,7 @@
 #Requires -Modules @{ModuleName='AWS.Tools.Common';ModuleVersion='4.0.6.0'}
 #Requires -Module AWS.Tools.EC2
 $ErrorActionPreference = "Continue"
-#1: Sync your CloudEndure Tagging and EC2/EBS/SNAPSHOTS/AMI
+#1: Sync your ALL your EC2 Instances tagbs with EC2/EBS/SNAPSHOTS/AMI
 $ec2list = (Get-EC2Instance -Filter @{Name="tag-key";Values="CloudEndure creation time"}).Instances
 foreach ($ec2Looplist in $ec2list.InstanceId){
    try {
