@@ -11,7 +11,6 @@ foreach ($ec2Looplist in $ec2list.InstanceId){
       foreach ($ebsLoop in $ec2VolumeList) {
          Write-Host $ebsLoop "found for instance:" $ec2Looplist "applying tags" $EC2TagsObject.Value $EC2TagsObject.Key
          New-EC2Tag -Resource $ebsLoop -Tag @{Key="map-migrated";Value=$EC2TagsObject.Value} -Verbose      
-         Write-Host "Any snapshot or AMI ? Keep lookin"
          $ebsSnapList = (Get-EC2Snapshot -Filter @{Name="volume-id";Values=$ebsLoop})
          Write-Host "snapshots found for" $ebsLoop "-" $ebsSnapList.Count  "snapshots"
          foreach ($snapshot in $ebsSnapList.SnapshotId) {
@@ -19,6 +18,7 @@ foreach ($ec2Looplist in $ec2list.InstanceId){
             Write-Host "AMI found for snapshot:" $snapshot
             $amiId = (Get-EC2Image -Filter @{Name="block-device-mapping.snapshot-id";Values=$snapshot}).ImageId
             foreach ($amis in $amiId) {
+               Write-Host "Looking for AMI related to" $snapshot
                New-EC2Tag -Resource $amis -Tag @{Key="map-migrated";Value=$EC2TagsObject.Value} -Verbose               
             }
          }        
