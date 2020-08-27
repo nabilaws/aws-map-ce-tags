@@ -37,9 +37,14 @@ This script will synchronize specific tag (MAP2.0) or every tags to underlying r
         ---------------------------------------------------------------
 
 #Requires -Module AWS.Tools.EC2
+
 EC2 Instances migrated with CloudEndure (Tag Value: CloudEndure creation time) for MAP2.0,
+
 could miss the map-migrated tag.
+
 This script will synchronize your Instances (migrated with CloudEndure) tags (map-migrated/value only) 
+
 to every linked resources (EBS Volumes, snapshots and AMI)
+
 This action ensure you to fully benefit your MAP2.0 credits.
 
