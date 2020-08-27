@@ -8,7 +8,7 @@ foreach ($ec2Looplist in $ec2list.InstanceId){
       $ec2TagsObject = (Get-EC2Tag -Filter @{Name="resource-type";Values="instance"},@{Name="resource-id";Values=$ec2looplist} -Verbose)
       $ec2VolumeList = (Get-EC2Volume -Filter @{ Name="attachment.instance-id"; Values= $ec2looplist}).VolumeId
       Write-Host "Tags source list from instance:" $ec2Looplist
-      $ec2TagsObject | Format-Table | Out-String | Write-Host
+      $ec2TagsObject | Select-Object Key,Value | Format-Table | Out-String | Write-Host
       Write-Host "For the following volumes"
       $ec2VolumeList | Format-Table | Out-String | Write-Host
         foreach ($tags in $ec2TagsObject) {
