@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
-Description: An AWS solution to deploy tag automatically EKS resources (EC2 Fanilly) with MAP2.0
+Description: An AWS solution to deploy tag automatically EC2 resources (EC2 Fanilly) migrated with CloudEndure to apply your "map-migratged" tags
 Resources:
   SAMEKS4MAP:
     Type: 'AWS::Serverless::Function'

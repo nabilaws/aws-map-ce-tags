@@ -3,6 +3,7 @@
 $ErrorActionPreference = "Continue"
 #1: Sync your ALL your EC2 Instances tagbs with EC2/EBS/SNAPSHOTS/AMI
 $ec2list = (Get-EC2Instance).Instances
+
 foreach ($ec2Looplist in $ec2list.InstanceId){
    try {
       $ec2TagsObject = (Get-EC2Tag -Filter @{Name="resource-type";Values="instance"},@{Name="resource-id";Values=$ec2looplist} -Verbose)
@@ -15,7 +16,15 @@ foreach ($ec2Looplist in $ec2list.InstanceId){
             foreach ($ebsLoop in $ec2VolumeList) {
                 Write-Host "Target resource:" $ebsLoop "Applying" 
                 $tags | Select-Object Key,Value | Format-Table | Out-String | Write-Host
-                #New-EC2Tag -Resource $ebsLoop -Tag @{Key=$ec2TagsObject.Key;Value=$ec2TagsObject.Value} -Verbose
+
+
+                $ec2TagsObjectClean = $tags | Select-Object Key,Value
+                $ebsLoopTagsObject = (Get-EC2Tag -Filter @{Name="resource-type";Values="volume"},@{Name="resource-id";Values=$ebsLoop} -Verbose) | Select-Object Key,Value
+                $missingTags = (Compare-Object $ebsLoopTagsObject $ec2TagsObjectClean).InputObject
+                Write-Host "Missing tags for instance " $ec2Looplist "volume" $ebsLoop -ForegroundColor Yellow -BackgroundColor Red
+                $missingTags
+                #New-EC2Tag -Resource $ebsLoop -Tag $missingTags -Verbose
+
                 $ebsSnapList = (Get-EC2Snapshot -Filter @{Name="volume-id";Values=$ebsLoop})
                     foreach ($snapshot in $ebsSnapList.SnapshotId) {
                         Write-Host "Target resource:"  $snapshot               
